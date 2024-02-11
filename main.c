@@ -23,6 +23,7 @@
 //  REVISION HISTORY
 //      Rev 0.1   18 Nov 2023
 //      Rev 0.5   02 Dec 2023
+//              fork adding sync button
 //
 //  PROJECT PAGE
 //      https://github.com/RPiks/pico-WSPR-tx
@@ -56,7 +57,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-
+#include "pico/stdlib.h"
 #include "pico/multicore.h"
 #include "pico-hf-oscillator/lib/assert.h"
 #include "pico-hf-oscillator/defines.h"
@@ -70,8 +71,9 @@
 #define CONFIG_GPS_RELY_ON_PAST_SOLUTION NO
 #define CONFIG_SCHEDULE_SKIP_SLOT_COUNT 5
 #define CONFIG_WSPR_DIAL_FREQUENCY 18106000UL //24926000UL // 28126000UL //7040000UL
-#define CONFIG_CALLSIGN "R2BDY"
-#define CONFIG_LOCATOR4 "KO85"
+#define CONFIG_CALLSIGN "DG7JH"
+#define CONFIG_LOCATOR4 "JN39"
+#define BTN_PIN 21 //pin 27 on pico board
 
 WSPRbeaconContext *pWSPR;
 
@@ -80,6 +82,9 @@ int main()
     StampPrintf("\n");
     sleep_ms(5000);
     StampPrintf("R2BDY Pico-WSPR-tx start.");
+    
+    gpio_init(BTN_PIN);
+    gpio_set_dir(BTN_PIN, GPIO_IN);
 
     InitPicoHW();
 
@@ -108,10 +113,13 @@ int main()
 
     DCO._pGPStime = GPStimeInit(0, 9600, GPS_PPS_PIN);
     assert_(DCO._pGPStime);
-
+    StampPrintf("When button pressed, I start transmitting.21b");
     int tick = 0;
-    for(;;)
+    while (1)
     {
+    while(gpio_get(BTN_PIN))
+    {
+        StampPrintf("Start whispering!");
         /*
         if(WSPRbeaconIsGPSsolutionActive(pWB))
         {
@@ -130,18 +138,20 @@ int main()
         }
         else
         {
-            StampPrintf("Omitting GPS solution, start tx now.");
+            StampPrintf("Not supporting GPS solution, start tx now.");
             PioDCOStart(pWB->_pTX->_p_oscillator);
             WSPRbeaconCreatePacket(pWB);
             sleep_ms(100);
             WSPRbeaconSendPacket(pWB);
-            StampPrintf("The system will be halted when tx is completed.");
-            for(;;)
+            StampPrintf("The system will wait for next trigger when tx is completed.");
+            bool wait4endTX = 0;
+            while(!wait4endTX)
             {
                 if(!TxChannelPending(pWB->_pTX))
                 {
                     PioDCOStop(pWB->_pTX->_p_oscillator);
                     StampPrintf("System halted.");
+                    wait4endTX = 1;
                 }
                 gpio_put(PICO_DEFAULT_LED_PIN, 1);
                 sleep_ms(500);
@@ -158,5 +168,6 @@ int main()
             WSPRbeaconDumpContext(pWB);
 #endif
         sleep_ms(900);
+    }
     }
 }
