@@ -71,8 +71,8 @@
 #define CONFIG_GPS_RELY_ON_PAST_SOLUTION NO
 #define CONFIG_SCHEDULE_SKIP_SLOT_COUNT 5
 #define CONFIG_WSPR_DIAL_FREQUENCY 18106000UL //24926000UL // 28126000UL //7040000UL
-#define CONFIG_CALLSIGN "DG7JH"
-#define CONFIG_LOCATOR4 "JN39"
+#define CONFIG_CALLSIGN "YOURCALL"
+#define CONFIG_LOCATOR4 "YOURLOCATOR"
 #define BTN_PIN 21 //pin 27 on pico board
 
 WSPRbeaconContext *pWSPR;
@@ -113,7 +113,7 @@ int main()
 
     DCO._pGPStime = GPStimeInit(0, 9600, GPS_PPS_PIN);
     assert_(DCO._pGPStime);
-    StampPrintf("When button pressed, I start transmitting.21b");
+    StampPrintf("When button pressed, I start transmitting.");
     int tick = 0;
     while (1)
     {
