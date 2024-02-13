@@ -54,6 +54,7 @@
 //  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 //  THE SOFTWARE.
 ///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -67,13 +68,17 @@
 #include <logutils.h>
 #include <protos.h>
 
+#include "hardware/rtc.h"
+#include "pico/util/datetime.h"
+
 #define CONFIG_GPS_SOLUTION_IS_MANDATORY NO
 #define CONFIG_GPS_RELY_ON_PAST_SOLUTION NO
 #define CONFIG_SCHEDULE_SKIP_SLOT_COUNT 5
-#define CONFIG_WSPR_DIAL_FREQUENCY 18106000UL //24926000UL // 28126000UL //7040000UL
-#define CONFIG_CALLSIGN "DG7JH"
-#define CONFIG_LOCATOR4 "JN39"
+#define CONFIG_WSPR_DIAL_FREQUENCY 7040000UL //24926000UL // 28126000UL //7040000UL //18106000UL
+#define CONFIG_CALLSIGN "YOURCALL"
+#define CONFIG_LOCATOR4 "YOURLOCATOR"
 #define BTN_PIN 21 //pin 27 on pico board
+#define REPEAT_TX_EVERY_MINUTE 4 // 4 is the minimum, for longer intervals choose 6,8,10,12, ...
 
 WSPRbeaconContext *pWSPR;
 
@@ -113,61 +118,84 @@ int main()
 
     DCO._pGPStime = GPStimeInit(0, 9600, GPS_PPS_PIN);
     assert_(DCO._pGPStime);
-    StampPrintf("When button pressed, I start transmitting.21b");
+    StampPrintf("When button pressed, I start transmitting.");
     int tick = 0;
+    rtc_init();
+    datetime_t t = {
+                .year  = 2024,
+                .month = 01,
+                .day   = 01,
+                .dotw  = 1, // 0 is Sunday, so 5 is Friday
+                .hour  = 1,
+                .min   = REPEAT_TX_EVERY_MINUTE,
+                .sec   = 00
+            };    
     while (1)
-    {
-    while(gpio_get(BTN_PIN))
-    {
-        StampPrintf("Start whispering!");
-        /*
-        if(WSPRbeaconIsGPSsolutionActive(pWB))
+    {   
+        bool txStarted = 0;
+        while(gpio_get(BTN_PIN) || txStarted)
         {
-            const char *pgps_qth = WSPRbeaconGetLastQTHLocator(pWB);
-            if(pgps_qth)
+            if(!txStarted) 
             {
-                strncpy(pWB->_pu8_locator, pgps_qth, 4);
-                pWB->_pu8_locator[5] = 0x00;
+                rtc_set_datetime(&t);
             }
-        }
-        */
-       
-        if(pWB->_txSched._u8_tx_GPS_mandatory)
-        {
-            WSPRbeaconTxScheduler(pWB, YES);
-        }
-        else
-        {
-            StampPrintf("Not supporting GPS solution, start tx now.");
-            PioDCOStart(pWB->_pTX->_p_oscillator);
-            WSPRbeaconCreatePacket(pWB);
-            sleep_ms(100);
-            WSPRbeaconSendPacket(pWB);
-            StampPrintf("The system will wait for next trigger when tx is completed.");
-            bool wait4endTX = 0;
-            while(!wait4endTX)
+            sleep_us(64);
+            if((t.min % REPEAT_TX_EVERY_MINUTE) == 0) 
             {
-                if(!TxChannelPending(pWB->_pTX))
+                StampPrintf("Start whispering!");
+                /*
+                if(WSPRbeaconIsGPSsolutionActive(pWB))
                 {
-                    PioDCOStop(pWB->_pTX->_p_oscillator);
-                    StampPrintf("System halted.");
-                    wait4endTX = 1;
+                    const char *pgps_qth = WSPRbeaconGetLastQTHLocator(pWB);
+                    if(pgps_qth)
+                    {
+                        strncpy(pWB->_pu8_locator, pgps_qth, 4);
+                        pWB->_pu8_locator[5] = 0x00;
+                    }
                 }
+                */
+            
+                if(pWB->_txSched._u8_tx_GPS_mandatory)
+                {
+                    WSPRbeaconTxScheduler(pWB, YES);
+                }
+                else
+                {
+                    StampPrintf("Not supporting GPS solution, start tx now.");
+                    PioDCOStart(pWB->_pTX->_p_oscillator);
+                    WSPRbeaconCreatePacket(pWB);
+                    sleep_ms(100);
+                    WSPRbeaconSendPacket(pWB);
+                    StampPrintf("The system will wait for next trigger when tx is completed.");
+                    bool wait4endTX = 0;
+                    while(!wait4endTX)
+                    {
+                        if(!TxChannelPending(pWB->_pTX))
+                        {
+                            PioDCOStop(pWB->_pTX->_p_oscillator);
+                            StampPrintf("System halted.");
+                            wait4endTX = 1;
+                        }
+                        gpio_put(PICO_DEFAULT_LED_PIN, 1);
+                        sleep_ms(500);
+                        gpio_put(PICO_DEFAULT_LED_PIN, 0);
+                    }
+                }
+                
                 gpio_put(PICO_DEFAULT_LED_PIN, 1);
-                sleep_ms(500);
+                sleep_ms(100);
                 gpio_put(PICO_DEFAULT_LED_PIN, 0);
-            }
-        }
-        
-        gpio_put(PICO_DEFAULT_LED_PIN, 1);
-        sleep_ms(100);
-        gpio_put(PICO_DEFAULT_LED_PIN, 0);
 
-#ifdef DEBUG
-        if(0 == ++tick % 60)
-            WSPRbeaconDumpContext(pWB);
-#endif
-        sleep_ms(900);
-    }
+                #ifdef DEBUG
+                        if(0 == ++tick % 60)
+                            WSPRbeaconDumpContext(pWB);
+                #endif
+                sleep_ms(100);
+                txStarted = 1;
+                
+            }
+        rtc_get_datetime(&t); 
+        sleep_ms(1000);
+        }
     }
 }
