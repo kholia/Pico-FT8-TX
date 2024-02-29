@@ -12,7 +12,7 @@
  With this fork, the frist transmission of the beacon can be triggered by a button. And then, after the first transmission ends, it is repeated every 4 minutes controlled by the internal rtc of the pi pico. The interval for the following transmission can be configured.
 
 # Changes on hardware
-Just add a button between pin 27 and 35 on the Pico board.
+Just add a button between pin 27 and 36 on the Pico board.
 
 # HOW TO bring pico beacon on air
 Step 1: Configure a) your call b) your locator c) the tx frequency d) the transmission interval within the define section of main.c 
