@@ -91,8 +91,17 @@
 #define kHz 1000UL                                                /* Freq. */
 #define MHz 1000000UL
 #define PLL_SYS_MHZ 270UL
-                                                             /* WSPR defs. */
-#define WSPR_FREQ_STEP_MILHZ    2930UL     /* FSK freq.bin (*2 this time). */
+
+// #define WSPR_DELAY              683          // Delay value for WSPR
+// #define FT8_DELAY               159          // Delay value for FT8
+
+// WSPR -> Tones are separated by 1.46 Hz.
+// #define WSPR_FREQ_STEP_MILHZ    2930UL     /* FSK freq.bin (*2 this time). */
+// (2930 / 1.46) * 6.25 => 12542.8082
+
+// FT8 tones are separated by 6.25 Hz
+#define WSPR_FREQ_STEP_MILHZ    12542UL         /* FSK freq.bin (*2 this time) - for FT8 */
+
 #define WSPR_MAX_GPS_DISCONNECT_TM  \
         (6 * HOUR)                      /* How long is active without GPS. */
 

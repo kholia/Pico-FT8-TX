@@ -53,6 +53,19 @@
 #include <WSPRutility.h>
 #include <maidenhead.h>
 
+// An FT8 signal starts 0.5 seconds into a cycle and lasts 12.64 seconds. It
+// consists of 79 symbols, each 0.16 seconds long. Each symbol is a single
+// steady tone. For any given signal there are eight possible tones. The tone
+// spacing is 6.25 Hz. FT8 symbol period = 1920 / 12000 seconds = 160.
+
+// WSPR:
+// Tone separation: 1.4648 Hz (total = 5.8592 Hz)
+// Number of symbols: 162
+// Keying rate: 12000/8192 = 1.46484375 baud
+// Duration of transmission: 162 x 8192/12000 = 110.592s
+// Wait time: 9,408 (9408000us)
+// Symbol duration: 0.68266667s (682667us)
+
 /// @brief Initializes a new WSPR beacon context.
 /// @param pcallsign HAM radio callsign, 12 chr max.
 /// @param pgridsquare Maidenhead locator, 7 chr max.
@@ -77,7 +90,9 @@ WSPRbeaconContext *WSPRbeaconInit(const char *pcallsign, const char *pgridsquare
     strncpy(p->_pu8_locator, pgridsquare, sizeof(p->_pu8_locator));
     p->_u8_txpower = txpow_dbm;
 
-    p->_pTX = TxChannelInit(682667, 0, pdco);
+    // http://squirrelengineering.com/high-altitude-balloon/adrift-problem-solving-fs2-wspr-drift/
+    // p->_pTX = TxChannelInit(682667, 0, pdco); // WSPR_DELAY is 683
+    p->_pTX = TxChannelInit(159000, 0, pdco); // FT8_DELAY is 159
     assert_(p->_pTX);
     p->_pTX->_u32_dialfreqhz = dial_freq_hz + shift_freq_hz;
     p->_pTX->_i_tx_gpio = gpio;
@@ -94,6 +109,59 @@ void WSPRbeaconSetDialFreq(WSPRbeaconContext *pctx, uint32_t freq_hz)
     pctx->_pTX->_u32_dialfreqhz = freq_hz;
 }
 
+#include <stdlib.h>
+#include <string.h>
+#include <stdio.h>
+#include <math.h>
+#include <stdbool.h>
+
+#include "common/common.h"
+#include "ft8/message.h"
+#include "ft8/encode.h"
+#include "ft8/constants.h"
+
+#define LOG_LEVEL LOG_INFO
+#include "ft8/debug.h"
+
+void packtext77(const char* text, uint8_t* b77);
+
+void ft8_encode_top(uint8_t *tones)
+{
+    char *message = "WQ6WW1HDK1TE"; // ATTN: You will want to customize this message!
+    // char *message = "CQ K1TE FN42";
+    // First, pack the text data into binary message
+    ftx_message_t msg;
+    ftx_message_rc_t rc = ftx_message_encode(&msg, NULL, message);
+    if (rc != FTX_MESSAGE_RC_OK)
+    {
+        // Try 'free text' encoding
+        if (strlen(message) <= 13)
+            packtext77(message, (uint8_t *)&msg.payload);
+        else {
+            printf("Cannot parse message!\n");
+            printf("RC = %d\n", (int)rc);
+       }
+    }
+
+    printf("Packed data: ");
+    for (int j = 0; j < 10; ++j)
+    {
+        printf("%02x ", msg.payload[j]);
+    }
+    printf("\n");
+
+    int num_tones = FT8_NN;
+
+    ft8_encode(msg.payload, tones);
+
+    printf("FSK tones: ");
+    for (int j = 0; j < num_tones; ++j)
+    {
+        printf("%d", tones[j]);
+    }
+    printf("\n");
+}
+
 /// @brief Constructs a new WSPR packet using the data available.
 /// @param pctx Context
 /// @return 0 if OK.
@@ -101,10 +169,15 @@ int WSPRbeaconCreatePacket(WSPRbeaconContext *pctx)
 {
     assert_(pctx);
 
-    wspr_encode(pctx->_pu8_callsign, pctx->_pu8_locator, pctx->_u8_txpower, pctx->_pu8_outbuf);
+    // wspr_encode(pctx->_pu8_callsign, pctx->_pu8_locator, pctx->_u8_txpower, pctx->_pu8_outbuf);
+
+    // FT8 hack
+    ft8_encode_top(pctx->_pu8_outbuf);
 
     return 0;
 }
+
+#define FT8_SYMBOL_COUNT 79
 
 /// @brief Sends a prepared WSPR packet using TxChannel.
 /// @param pctx Context.
@@ -117,8 +190,11 @@ int WSPRbeaconSendPacket(const WSPRbeaconContext *pctx)
 
     TxChannelClear(pctx->_pTX);
 
-    memcpy(pctx->_pTX->_pbyte_buffer, pctx->_pu8_outbuf, WSPR_SYMBOL_COUNT);
-    pctx->_pTX->_ix_input = WSPR_SYMBOL_COUNT;
+    // memcpy(pctx->_pTX->_pbyte_buffer, pctx->_pu8_outbuf, WSPR_SYMBOL_COUNT);
+    // pctx->_pTX->_ix_input = WSPR_SYMBOL_COUNT;
+
+    memcpy(pctx->_pTX->_pbyte_buffer, pctx->_pu8_outbuf, FT8_SYMBOL_COUNT);
+    pctx->_pTX->_ix_input = FT8_SYMBOL_COUNT;
 
     return 0;
 }
