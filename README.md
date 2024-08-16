@@ -9,16 +9,9 @@ modulated to milliherzts - the heart of the beacon and the project!
 As Roman writes in his project description: "It doesn't require any hardware -
 Pico board itself only."
 
-With this fork, the first transmission of the beacon can be triggered by a
-button. And then, after the first transmission ends, it is repeated every 4
-minutes controlled by the internal RTC of the Pi Pico. The interval for the
-following transmission can be configured.
-
-Dhiru: This fork adds FT8 support.
+Dhiru: This branch adds FT8 + "rig control" support.
 
 # Hardware Setup
-
-Just add a button between Pin 27 (`GP21`) and Pin 36 (`3V3`) on the Pico board.
 
 The antenna connects to Pin 9 (`GP6`) on the Pico board.
 
@@ -26,10 +19,7 @@ The antenna connects to Pin 9 (`GP6`) on the Pico board.
 
 # Bringing Pico beacon on air
 
-Step 1: Configure the FT8 message (`char *message = "CQ K1TE FN42";`) to send
-in the `WSPRbeacon/WSPRbeacon.c` file.
-
-Step 2: Compile the project and copy the `build/pico-wspr-tx.uf2` file to the
+Step 1: Compile the project and copy the `build/pico-wspr-tx.uf2` file to the
 Pico board.
 
 ```
@@ -44,13 +34,11 @@ export PICO_SDK_PATH=$HOME/repos/pico-sdk
 ./build.sh
 ```
 
-Step 3: Power the Pico board
+Step 2: Power the Pico board
 
-Step 4: Wait for the start time of the next FT8 transfer window. Press the
-button to start the next broadcast.
+Step 3: Run WSJT-X and the included `transceiver_server.py` helper script.
 
-Step 5: Use the WSJT-X software to check if the transfer is within the valid
-transfer window. If necessary, repeat the start procedure.
+Step 4: Use the WSJT-X software to transmit a message as usual.
 
 # Amplifier?
 
@@ -64,6 +52,10 @@ You can also try the `2W Amplifier 1-930MHz module` that is available on
 Amazon, and other places.
 
 ![2W amplifier module](screenshots/ready-made-amp-module.jpg)
+
+# TR Switch
+
+Use the well tested https://github.com/kholia/Simple-TR-Switch project.
 
 # Demo
 

@@ -125,9 +125,12 @@ void WSPRbeaconSetDialFreq(WSPRbeaconContext *pctx, uint32_t freq_hz)
 
 void packtext77(const char* text, uint8_t* b77);
 
+extern char current_message[32];
+
 void ft8_encode_top(uint8_t *tones)
 {
-    char *message = "WQ6WW1HDK1TE"; // ATTN: You will want to customize this message!
+    // char *message = "WQ6WW1HDK1TE"; // ATTN: You will want to customize this message!
+    char *message = current_message;
     // char *message = "CQ K1TE FN42";
     // First, pack the text data into binary message
     ftx_message_t msg;
