@@ -52,3 +52,16 @@ Mkfile.old
 dkms.conf
 
 build
+
+pioasm-install/
+*.bin
+*.dis
+*.ld
+pioasm
+cmake*
+CMa*
+generated*
+Makefile
+_deps*
+tags
+pico-sdk/

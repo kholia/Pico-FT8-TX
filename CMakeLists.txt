@@ -37,6 +37,7 @@ target_sources(pico-wspr-tx PUBLIC
                ${CMAKE_CURRENT_LIST_DIR}/init.c
                ${CMAKE_CURRENT_LIST_DIR}/core1.c
                ${CMAKE_CURRENT_LIST_DIR}/main.c
+               ${CMAKE_CURRENT_LIST_DIR}/power_status.c
                ${CMAKE_CURRENT_LIST_DIR}/ft8/encode.c
                ${CMAKE_CURRENT_LIST_DIR}/ft8/message.c
                ${CMAKE_CURRENT_LIST_DIR}/ft8/text.c
@@ -69,6 +70,7 @@ target_link_libraries(pico-wspr-tx
                       hardware_clocks
                       hardware_pio
                       hardware_rtc
+                      hardware_adc
                      )
 
 pico_add_extra_outputs(pico-wspr-tx)

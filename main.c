@@ -70,16 +70,19 @@
 
 #include "hardware/rtc.h"
 #include "pico/util/datetime.h"
+#include "hardware/adc.h"
 
 #define CONFIG_GPS_SOLUTION_IS_MANDATORY NO
 #define CONFIG_GPS_RELY_ON_PAST_SOLUTION NO
 #define CONFIG_SCHEDULE_SKIP_SLOT_COUNT 5
 // #define CONFIG_WSPR_DIAL_FREQUENCY 7040000UL //24926000UL // 28126000UL //7040000UL //18106000UL
-#define CONFIG_WSPR_DIAL_FREQUENCY 14078500UL //24926000UL // 28126000UL //7040000UL //18106000UL
+// #define CONFIG_WSPR_DIAL_FREQUENCY 14078500UL //24926000UL // 28126000UL //7040000UL //18106000UL
+#define CONFIG_WSPR_DIAL_FREQUENCY 28075500UL //24926000UL // 28126000UL //7040000UL //18106000UL
 #define CONFIG_CALLSIGN "YOURCALL" // NOT USED
 #define CONFIG_LOCATOR4 "YOURLOCATOR" // NOT USED
-#define BTN_PIN 21 //pin 27 on pico board
-#define REPEAT_TX_EVERY_MINUTE 4 // 4 is the minimum, for longer intervals choose 6,8,10,12, ...
+#define BTN_PIN 16 // Pin 21 on pico board
+// #define REPEAT_TX_EVERY_MINUTE 4 // 4 is the minimum, for longer intervals choose 6,8,10,12, ...
+#define REPEAT_TX_EVERY_MINUTE 1 // 4 is the minimum, for longer intervals choose 6,8,10,12, ...
 
 WSPRbeaconContext *pWSPR;
 
@@ -89,8 +92,12 @@ int main()
     // sleep_ms(5000);
     StampPrintf("R2BDY and VU3CER Pico-FT8-TX start.");
 
+    adc_init();
+    adc_set_temp_sensor_enabled(true);
+
     gpio_init(BTN_PIN);
     gpio_set_dir(BTN_PIN, GPIO_IN);
+    gpio_pull_up(BTN_PIN);
 
     InitPicoHW();
 
@@ -134,14 +141,15 @@ int main()
     while (1)
     {
         bool txStarted = 0;
-        while(gpio_get(BTN_PIN) || txStarted)
+        while((!gpio_get(BTN_PIN)) || txStarted)
         {
             if(!txStarted)
             {
                 rtc_set_datetime(&t);
             }
             sleep_us(64);
-            if((t.min % REPEAT_TX_EVERY_MINUTE) == 0)
+            if ((t.sec % 15) == 1)
+            // if((t.min % REPEAT_TX_EVERY_MINUTE) == 0)
             {
                 StampPrintf("Start fsk'ing!");
                 /*
@@ -174,7 +182,7 @@ int main()
                         if(!TxChannelPending(pWB->_pTX))
                         {
                             PioDCOStop(pWB->_pTX->_p_oscillator);
-                            StampPrintf("System halted.");
+                            // StampPrintf("System halted.");
                             wait4endTX = 1;
                         }
                         gpio_put(PICO_DEFAULT_LED_PIN, 1);
@@ -195,8 +203,8 @@ int main()
                 txStarted = 1;
 
             }
-        rtc_get_datetime(&t);
-        sleep_ms(1000);
+            rtc_get_datetime(&t);
+            sleep_ms(100);
         }
     }
 }

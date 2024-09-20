@@ -7,7 +7,7 @@
 //
 //
 //  WSPRbeacon.c - WSPR beacon - related functions.
-// 
+//
 //  DESCRIPTION
 //      The pico-WSPR-tx project provides WSPR beacon function using only
 //  Pi Pico board. *NO* additional hardware such as freq.synth required.
@@ -19,7 +19,7 @@
 //      Raspberry Pi pico.
 //
 //  REVISION HISTORY
-// 
+//
 //      Rev 0.1   18 Nov 2023
 //  Initial release.
 //
@@ -30,7 +30,7 @@
 //      MIT License (http://www.opensource.org/licenses/mit-license.php)
 //
 //  Copyright (c) 2023 by Roman Piksaykin
-//  
+//
 //  Permission is hereby granted, free of charge,to any person obtaining a copy
 //  of this software and associated documentation files (the Software), to deal
 //  in the Software without restriction,including without limitation the rights
@@ -114,6 +114,9 @@ void WSPRbeaconSetDialFreq(WSPRbeaconContext *pctx, uint32_t freq_hz)
 #include <stdio.h>
 #include <math.h>
 #include <stdbool.h>
+#include <power_status.h>
+#include "hardware/adc.h"
+#include "pico/float.h"
 
 #include "common/common.h"
 #include "ft8/message.h"
@@ -125,18 +128,62 @@ void WSPRbeaconSetDialFreq(WSPRbeaconContext *pctx, uint32_t freq_hz)
 
 void packtext77(const char* text, uint8_t* b77);
 
+//   0 -> > 80%
+//  -1 -> > 60%
+//  -2 -> > 50%
+//  -3 -> > 40%
+//  -4 -> > 20 (go to long long sleep)
+//  -5 -> < 20 (does not come on air)
+int battery_level = 0;  // default
+const float min_battery_volts = 3.0f;
+const float max_battery_volts = 4.2f;
+
+bool is_init_message = true;
+
+char message_buffer[32];
+
 void ft8_encode_top(uint8_t *tones)
 {
-    char *message = "WQ6WW1HDK1TE"; // ATTN: You will want to customize this message!
+    // char *message = "WQ6WW1HDK1TE"; // ATTN: You will want to customize this message!
     // char *message = "CQ K1TE FN42";
+
+    // XXX Pico W uses a CYW43 pin to get VBUS so we need to initialise it
+    bool old_battery_status = false;
+    bool battery_status = true;
+    // Get voltage
+    float voltage = 0;
+    int voltage_return = power_voltage(&voltage);
+    voltage_return = power_voltage(&voltage);
+    voltage = floorf(voltage * 100) / 100;
+    int percent_val = (int) (((voltage - min_battery_volts) / (max_battery_volts - min_battery_volts)) * 100);
+    if (percent_val > 80)
+      battery_level = 0;
+    else if (percent_val > 60)
+      battery_level = -1;
+    else if (percent_val > 50)
+      battery_level = -2;
+    else if (percent_val > 40)
+      battery_level = -3;
+    else if (percent_val > 20)
+      battery_level = -4;
+    else
+      battery_level = -5;
+
+    // Dirty hack
+    if (is_init_message) {
+      battery_level = 0;
+      is_init_message = false;
+    }
+
+    // char *message = "CQ VU3CER MK68"; // MK68 - Base grid when battery is maximum, "Subtract" for lower battery levels!
+    sprintf(message_buffer, "CQ VU3CER MK%02d", 68 + battery_level); // Base grid is MK68 for this message
     // First, pack the text data into binary message
     ftx_message_t msg;
-    ftx_message_rc_t rc = ftx_message_encode(&msg, NULL, message);
-    if (rc != FTX_MESSAGE_RC_OK)
-    {
+    ftx_message_rc_t rc = ftx_message_encode(&msg, NULL, message_buffer);
+    if (rc != FTX_MESSAGE_RC_OK) {
         // Try 'free text' encoding
-        if (strlen(message) <= 13)
-            packtext77(message, (uint8_t *)&msg.payload);
+        if (strlen(message_buffer) <= 13)
+            packtext77(message_buffer, (uint8_t *)&msg.payload);
         else {
             printf("Cannot parse message!\n");
             printf("RC = %d\n", (int)rc);
@@ -144,8 +191,7 @@ void ft8_encode_top(uint8_t *tones)
     }
 
     printf("Packed data: ");
-    for (int j = 0; j < 10; ++j)
-    {
+    for (int j = 0; j < 10; ++j) {
         printf("%02x ", msg.payload[j]);
     }
     printf("\n");
@@ -155,8 +201,7 @@ void ft8_encode_top(uint8_t *tones)
     ft8_encode(msg.payload, tones);
 
     printf("FSK tones: ");
-    for (int j = 0; j < num_tones; ++j)
-    {
+    for (int j = 0; j < num_tones; ++j) {
         printf("%d", tones[j]);
     }
     printf("\n");
@@ -213,7 +258,7 @@ int WSPRbeaconTxScheduler(WSPRbeaconContext *pctx, int verbose)
     const uint32_t is_GPS_active = pctx->_pTX->_p_oscillator->_pGPStime->_time_data._u8_is_solution_active;
     const uint32_t is_GPS_override = pctx->_txSched._u8_tx_GPS_past_time == YES;
 
-    const uint64_t u64_GPS_last_age_sec 
+    const uint64_t u64_GPS_last_age_sec
         = (u64tmnow - pctx->_pTX->_p_oscillator->_pGPStime->_time_data._u64_sysclk_nmea_last) / 1000000ULL;
 
     if(!is_GPS_available)
@@ -225,9 +270,9 @@ int WSPRbeaconTxScheduler(WSPRbeaconContext *pctx, int verbose)
     if(is_GPS_active || (pctx->_pTX->_p_oscillator->_pGPStime->_time_data._u32_utime_nmea_last &&
                          is_GPS_override && u64_GPS_last_age_sec < WSPR_MAX_GPS_DISCONNECT_TM))
     {
-        const uint32_t u32_unixtime_now 
+        const uint32_t u32_unixtime_now
             = pctx->_pTX->_p_oscillator->_pGPStime->_time_data._u32_utime_nmea_last + u64_GPS_last_age_sec;
-        
+
         const int isec_of_hour = u32_unixtime_now % HOUR;
         const int islot_number = isec_of_hour / (2 * MINUTE);
         const int islot_modulo = islot_number % pctx->_txSched._u8_tx_slot_skip;
@@ -265,7 +310,7 @@ void WSPRbeaconDumpContext(const WSPRbeaconContext *pctx)
     assert_(pctx->_pTX);
 
     const uint64_t u64tmnow = GetUptime64();
-    const uint64_t u64_GPS_last_age_sec 
+    const uint64_t u64_GPS_last_age_sec
         = (u64tmnow - pctx->_pTX->_p_oscillator->_pGPStime->_time_data._u64_sysclk_nmea_last) / 1000000ULL;
 
     StampPrintf("__________________");
@@ -276,7 +321,7 @@ void WSPRbeaconDumpContext(const WSPRbeaconContext *pctx)
     StampPrintf("gpo:%u", pctx->_pTX->_i_tx_gpio);
 
     GPStimeContext *pGPS = pctx->_pTX->_p_oscillator->_pGPStime;
-    const uint32_t u32_unixtime_now 
+    const uint32_t u32_unixtime_now
             = pctx->_pTX->_p_oscillator->_pGPStime->_time_data._u32_utime_nmea_last + u64_GPS_last_age_sec;
     assert_(pGPS);
     StampPrintf("=GPStimeContext=");
@@ -302,7 +347,7 @@ char *WSPRbeaconGetLastQTHLocator(const WSPRbeaconContext *pctx)
     assert_(pctx->_pTX);
     assert_(pctx->_pTX->_p_oscillator);
     assert_(pctx->_pTX->_p_oscillator->_pGPStime);
-    
+
     const double lat = 1e-5 * (double)pctx->_pTX->_p_oscillator->_pGPStime->_time_data._i64_lat_100k;
     const double lon = 1e-5 * (double)pctx->_pTX->_p_oscillator->_pGPStime->_time_data._i64_lon_100k;
 
