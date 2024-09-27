@@ -53,6 +53,8 @@
 #include <WSPRutility.h>
 #include <maidenhead.h>
 
+#include "debug/logutils.h"
+
 // An FT8 signal starts 0.5 seconds into a cycle and lasts 12.64 seconds. It
 // consists of 79 symbols, each 0.16 seconds long. Each symbol is a single
 // steady tone. For any given signal there are eight possible tones. The tone
@@ -92,6 +94,7 @@ WSPRbeaconContext *WSPRbeaconInit(const char *pcallsign, const char *pgridsquare
 
     // http://squirrelengineering.com/high-altitude-balloon/adrift-problem-solving-fs2-wspr-drift/
     // p->_pTX = TxChannelInit(682667, 0, pdco); // WSPR_DELAY is 683
+    // p->_pTX = TxChannelInit(159000, 0, pdco); // FT8_DELAY is 159
     p->_pTX = TxChannelInit(159000, 0, pdco); // FT8_DELAY is 159
     assert_(p->_pTX);
     p->_pTX->_u32_dialfreqhz = dial_freq_hz + shift_freq_hz;
@@ -145,7 +148,7 @@ char message_buffer[32];
 void ft8_encode_top(uint8_t *tones)
 {
     // char *message = "WQ6WW1HDK1TE"; // ATTN: You will want to customize this message!
-    // char *message = "CQ K1TE FN42";
+    // char *message_buffer = "CQ K1TE FN42";
 
     // XXX Pico W uses a CYW43 pin to get VBUS so we need to initialise it
     bool old_battery_status = false;

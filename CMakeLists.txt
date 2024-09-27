@@ -1,26 +1,28 @@
-# Generated Cmake Pico project file
+cmake_minimum_required(VERSION 3.12)
 
-cmake_minimum_required(VERSION 3.13)
+# Pull in SDK (must be before project)
+include(pico_sdk_import.cmake)
+include(pico_extras_import_optional.cmake)
 
-set(CMAKE_BUILD_TYPE "Release") 
+project(pico_examples C CXX ASM)
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
-# Initialise pico_sdk from installed location
-# (note this can come from environment, CMake cache etc)
-set(PICO_BOARD pico CACHE STRING "Board type")
-
-# Pull in Raspberry Pi Pico SDK (must be before project)
-include(pico_sdk_import.cmake)
-
-if (PICO_SDK_VERSION_STRING VERSION_LESS "1.4.0")
-  message(FATAL_ERROR "Raspberry Pi Pico SDK version 1.4.0 (or later) required. Your version is ${PICO_SDK_VERSION_STRING}")
+if (PICO_SDK_VERSION_STRING VERSION_LESS "2.0.0")
+    message(FATAL_ERROR "Raspberry Pi Pico SDK version 2.0.0 (or later) required. Your version is ${PICO_SDK_VERSION_STRING}")
 endif()
 
-project(pico-wspr-tx C CXX ASM)
+set(PICO_EXAMPLES_PATH ${PROJECT_SOURCE_DIR})
 
+# If you want debug output from USB (pass -DPICO_STDIO_USB=1) this ensures you don't lose any debug output while USB is set up
+if (NOT DEFINED PICO_STDIO_USB_CONNECT_WAIT_TIMEOUT_MS)
+    set(PICO_STDIO_USB_CONNECT_WAIT_TIMEOUT_MS 3000)
+endif()
+
+# Initialize the SDK
 pico_sdk_init()
+
 add_executable(pico-wspr-tx)
 pico_generate_pio_header(pico-wspr-tx ${CMAKE_CURRENT_LIST_DIR}/pico-hf-oscillator/piodco/dco2.pio)
 
@@ -69,7 +71,6 @@ target_link_libraries(pico-wspr-tx
                       hardware_timer
                       hardware_clocks
                       hardware_pio
-                      hardware_rtc
                       hardware_adc
                      )
 
