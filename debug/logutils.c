@@ -27,7 +27,7 @@
 //      MIT License (http://www.opensource.org/licenses/mit-license.php)
 //
 //  Copyright (c) 2023 by Roman Piksaykin
-//  
+//
 //  Permission is hereby granted, free of charge,to any person obtaining a copy
 //  of this software and associated documentation files (the Software), to deal
 //  in the Software without restriction,including without limitation the rights
@@ -63,7 +63,7 @@ void StampPrintf(const char* pformat, ...)
     }
 
     uint64_t tm_us = to_us_since_boot(get_absolute_time());
-    
+
     const uint32_t tm_day = (uint32_t)(tm_us / 86400000000ULL);
     tm_us -= (uint64_t)tm_day * 86400000000ULL;
 
@@ -72,7 +72,7 @@ void StampPrintf(const char* pformat, ...)
 
     const uint32_t tm_min = (uint32_t)(tm_us / 60000000ULL);
     tm_us -= (uint64_t)tm_min * 60000000ULL;
-    
+
     const uint32_t tm_sec = (uint32_t)(tm_us / 1000000ULL);
     tm_us -= (uint64_t)tm_sec * 1000000ULL;
 

@@ -14,12 +14,9 @@ button. And then, after the first transmission ends, it is repeated every 4
 minutes controlled by the internal RTC of the Pi Pico. The interval for the
 following transmission can be configured.
 
-Dhiru: This fork adds FT8 support.
+Dhiru: This fork adds FT8 and NTP support.
 
 # Hardware Setup
-
-NEW (Updated): Add a button between Pin 21 (`GP16`) and Pin 23 (`GND`) on the
-Pico board.
 
 The antenna connects to Pin 9 (`GP6`) on the Pico board.
 
@@ -49,11 +46,8 @@ export PICO_SDK_PATH=$HOME/repos/pico-sdk
 
 Step 3: Power the Pico board
 
-Step 4: Wait for the start time of the next FT8 transfer window. Press the
-button to start the next broadcast.
-
-Step 5: Use the WSJT-X software to check if the transfer is within the valid
-transfer window. If necessary, repeat the start procedure.
+Step 4: Use the WSJT-X software to check if the transfer is within the valid
+transfer window.
 
 # Amplifier?
 

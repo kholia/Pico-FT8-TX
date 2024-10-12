@@ -176,7 +176,7 @@ void ft8_encode_top(uint8_t *tones)
     }
 
     // char *message = "CQ VU3CER MK68"; // MK68 - Base grid when battery is maximum, "Subtract" for lower battery levels!
-    sprintf(message_buffer, "CQ VU3CER MK%02d", 68 + battery_level); // Base grid is MK68 for this message
+    sprintf(message_buffer, "CQ VU3FOE MK%02d", 68 + battery_level); // Base grid is MK68 for this message
     // First, pack the text data into binary message
     ftx_message_t msg;
     ftx_message_rc_t rc = ftx_message_encode(&msg, NULL, message_buffer);

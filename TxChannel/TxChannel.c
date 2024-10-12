@@ -7,7 +7,7 @@
 //
 //
 //  TxChannel.c - Produces a time-accurate `bit` stream.
-//                Invokes a `modulator` function. 
+//                Invokes a `modulator` function.
 //  DESCRIPTION
 //      Receives data asynchronously. Calls low level modulator function
 //      synchronously according to params.
@@ -28,7 +28,7 @@
 //      MIT License (http://www.opensource.org/licenses/mit-license.php)
 //
 //  Copyright (c) 2023 by Roman Piksaykin
-//  
+//
 //  Permission is hereby granted, free of charge,to any person obtaining a copy
 //  of this software and associated documentation files (the Software), to deal
 //  in the Software without restriction,including without limitation the rights
@@ -49,6 +49,12 @@
 ///////////////////////////////////////////////////////////////////////////////
 #include "TxChannel.h"
 
+#include "pico/cyw43_arch.h"
+
+#include "debug/logutils.h"
+
+#define PICO_DEFAULT_LED_PIN CYW43_WL_GPIO_LED_PIN
+
 static TxChannelContext *spTX = NULL;
 static void __not_in_flash_func (TxChannelISR)(void)
 {
@@ -58,11 +64,11 @@ static void __not_in_flash_func (TxChannelISR)(void)
     const int n2send = TxChannelPop(spTX, &byte);
     if(n2send)
     {
-        const int32_t i32_compensation_millis = 
-            PioDCOGetFreqShiftMilliHertz(spTX->_p_oscillator, 
+        const int32_t i32_compensation_millis =
+            PioDCOGetFreqShiftMilliHertz(spTX->_p_oscillator,
                                          (uint64_t)(spTX->_u32_dialfreqhz * 1000LL));
 
-        PioDCOSetFreq(pDCO, spTX->_u32_dialfreqhz, 
+        PioDCOSetFreq(pDCO, spTX->_u32_dialfreqhz,
                       (uint32_t)byte * WSPR_FREQ_STEP_MILHZ - 2 * i32_compensation_millis);
     }
 
@@ -74,7 +80,7 @@ EXIT:
 
     /* LED debug signal */
     static int tick = 0;
-    gpio_put(PICO_DEFAULT_LED_PIN, ++tick & 1);
+    cyw43_arch_gpio_put(PICO_DEFAULT_LED_PIN, ++tick & 1);
 }
 
 /// @brief Initializes a TxChannel context. Starts ISR.
@@ -82,7 +88,7 @@ EXIT:
 /// @param timer_alarm_num Pico-specific hardware timer resource id.
 /// @param pDCO Ptr to oscillator.
 /// @return the Context.
-TxChannelContext *TxChannelInit(const uint32_t bit_period_us, uint8_t timer_alarm_num, 
+TxChannelContext *TxChannelInit(const uint32_t bit_period_us, uint8_t timer_alarm_num,
                                 PioDco *pDCO)
 {
     assert_(pDCO);
@@ -101,6 +107,8 @@ TxChannelContext *TxChannelInit(const uint32_t bit_period_us, uint8_t timer_alar
     irq_set_exclusive_handler(TIMER_IRQ_0, TxChannelISR);
     irq_set_priority(TIMER_IRQ_0, 0x00);
     irq_set_enabled(TIMER_IRQ_0, true);
+
+    StampPrintf("Hi from TxChannelInit!");
 
     p->_tm_future_call = timer_hw->timerawl + 20000LL;
     timer_hw->alarm[p->_timer_alarm_num] = (uint32_t)p->_tm_future_call;

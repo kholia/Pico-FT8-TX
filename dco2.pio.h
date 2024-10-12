@@ -14,7 +14,6 @@
 
 #define dco_wrap_target 0
 #define dco_wrap 12
-#define dco_pio_version 0
 
 static const uint16_t dco_program_instructions[] = {
             //     .wrap_target
@@ -39,10 +38,6 @@ static const struct pio_program dco_program = {
     .instructions = dco_program_instructions,
     .length = 13,
     .origin = -1,
-    .pio_version = 0,
-#if PICO_PIO_VERSION > 0
-    .used_gpio_ranges = 0x0
-#endif
 };
 
 static inline pio_sm_config dco_program_get_default_config(uint offset) {

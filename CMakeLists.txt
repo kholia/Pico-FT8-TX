@@ -2,14 +2,15 @@
 
 cmake_minimum_required(VERSION 3.13)
 
-set(CMAKE_BUILD_TYPE "Release") 
+set(CMAKE_BUILD_TYPE "Release")
 
 set(CMAKE_C_STANDARD 11)
 set(CMAKE_CXX_STANDARD 17)
 
 # Initialise pico_sdk from installed location
 # (note this can come from environment, CMake cache etc)
-set(PICO_BOARD pico CACHE STRING "Board type")
+# set(PICO_BOARD pico CACHE STRING "Board type")
+set(PICO_BOARD pico_w)
 
 # Pull in Raspberry Pi Pico SDK (must be before project)
 include(pico_sdk_import.cmake)
@@ -23,6 +24,11 @@ project(pico-wspr-tx C CXX ASM)
 pico_sdk_init()
 add_executable(pico-wspr-tx)
 pico_generate_pio_header(pico-wspr-tx ${CMAKE_CURRENT_LIST_DIR}/pico-hf-oscillator/piodco/dco2.pio)
+
+# Not only does the WiFi interface use PIO1 by default, but it also uses 2 X DMA to tx / rx the SPI data.
+target_compile_definitions(pico-wspr-tx PRIVATE
+    CYW43_SPI_PIO_PREFERRED_PIO=0
+)
 
 target_sources(pico-wspr-tx PUBLIC
                ${CMAKE_CURRENT_LIST_DIR}/pico-hf-oscillator/lib/assert.c
@@ -51,6 +57,12 @@ pico_set_program_version(pico-wspr-tx "0.5")
 pico_enable_stdio_uart(pico-wspr-tx 1)
 pico_enable_stdio_usb(pico-wspr-tx 1)
 
+target_compile_definitions(pico-wspr-tx PRIVATE
+        WIFI_SSID=\"${WIFI_SSID}\"
+        WIFI_PASSWORD=\"${WIFI_PASSWORD}\"
+        )
+
+
 # Add the standard include files to the build
 target_include_directories(pico-wspr-tx PRIVATE
                            ${CMAKE_CURRENT_LIST_DIR}
@@ -71,6 +83,7 @@ target_link_libraries(pico-wspr-tx
                       hardware_pio
                       hardware_rtc
                       hardware_adc
+                      pico_cyw43_arch_lwip_threadsafe_background
                      )
 
 pico_add_extra_outputs(pico-wspr-tx)

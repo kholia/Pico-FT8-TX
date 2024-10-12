@@ -7,7 +7,7 @@
 //
 //
 //  init.c - Pico hardware initializations.
-// 
+//
 //  DESCRIPTION
 //      The pico-WSPR-tx project provides WSPR beacon function using only
 //  Pi Pico board. *NO* additional hardware such as freq.synth required.
@@ -19,7 +19,7 @@
 //      Raspberry Pi pico.
 //
 //  REVISION HISTORY
-// 
+//
 //      Rev 0.1   18 Nov 2023
 //  Initial release.
 //
@@ -30,7 +30,7 @@
 //      MIT License (http://www.opensource.org/licenses/mit-license.php)
 //
 //  Copyright (c) 2023 by Roman Piksaykin
-//  
+//
 //  Permission is hereby granted, free of charge,to any person obtaining a copy
 //  of this software and associated documentation files (the Software), to deal
 //  in the Software without restriction,including without limitation the rights
@@ -60,8 +60,8 @@
 /// @brief Initializes Pi pico low level hardware.
 void InitPicoHW(void)
 {
-    gpio_init(PICO_DEFAULT_LED_PIN);
-    gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
+    // gpio_init(PICO_DEFAULT_LED_PIN);
+    // gpio_set_dir(PICO_DEFAULT_LED_PIN, GPIO_OUT);
 
     const uint32_t clkhz = PLL_SYS_MHZ * 1000000L;
     set_sys_clock_khz(clkhz / kHz, true);
