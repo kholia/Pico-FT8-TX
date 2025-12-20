@@ -7,7 +7,7 @@
 //
 //
 //  defines.h - Project macros.
-// 
+//
 //  DESCRIPTION
 //      The pico-WSPR-tx project provides WSPR beacon function using only
 //  Pi Pico board. *NO* additional hardware such as freq.synth required.
@@ -19,7 +19,7 @@
 //      Raspberry Pi pico.
 //
 //  REVISION HISTORY
-// 
+//
 //      Rev 0.1   18 Nov 2023
 //  Initial release.
 //
@@ -30,7 +30,7 @@
 //      MIT License (http://www.opensource.org/licenses/mit-license.php)
 //
 //  Copyright (c) 2023 by Roman Piksaykin
-//  
+//
 //  Permission is hereby granted, free of charge,to any person obtaining a copy
 //  of this software and associated documentation files (the Software), to deal
 //  in the Software without restriction,including without limitation the rights
@@ -90,9 +90,19 @@
 
 #define kHz 1000UL                                                /* Freq. */
 #define MHz 1000000UL
-#define PLL_SYS_MHZ 270UL
-                                                             /* WSPR defs. */
-#define WSPR_FREQ_STEP_MILHZ    2930UL     /* FSK freq.bin (*2 this time). */
+// #define PLL_SYS_MHZ 270UL
+#define PLL_SYS_MHZ 250UL
+
+// #define WSPR_DELAY              683          // Delay value for WSPR
+// #define FT8_DELAY               159          // Delay value for FT8
+
+// WSPR -> Tones are separated by 1.46 Hz.
+// #define WSPR_FREQ_STEP_MILHZ    2930UL     /* FSK freq.bin (*2 this time). */
+// (2930 / 1.46) * 6.25 => 12542.8082
+
+// FT8 tones are separated by 6.25 Hz
+#define WSPR_FREQ_STEP_MILHZ    12542UL         /* FSK freq.bin (*2 this time) - for FT8 */
+
 #define WSPR_MAX_GPS_DISCONNECT_TM  \
         (6 * HOUR)                      /* How long is active without GPS. */
 

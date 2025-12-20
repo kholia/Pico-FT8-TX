@@ -59,6 +59,18 @@ typedef struct
 
 } FlashMemContext;
 
+// Initialize flash memory context
+void flashmem_init(FlashMemContext *ctx);
 
+// Read WiFi and station configuration from flash
+bool flashmem_read_wifi_config(FlashMemContext *ctx, char *ssid, char *password, size_t ssid_size, size_t password_size);
+bool flashmem_read_station_config(FlashMemContext *ctx, char *callsign, char *locator, size_t callsign_size, size_t locator_size);
+bool flashmem_read_frequency_config(FlashMemContext *ctx, uint32_t *frequency);
+
+// Write WiFi and station configuration to flash
+bool flashmem_write_config(FlashMemContext *ctx, const char *ssid, const char *password, const char *callsign, const char *locator, uint32_t frequency);
+
+// Clear WiFi configuration
+void flashmem_clear_wifi_config(FlashMemContext *ctx);
 
 #endif

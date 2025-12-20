@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Configuration Saved</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .success-icon {
+            font-size: 4em;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            color: #27ae60;
+            margin-bottom: 20px;
+        }
+
+        .message {
+            color: #2c3e50;
+            font-size: 1.1em;
+            line-height: 1.6;
+            margin-bottom: 30px;
+        }
+
+        .reboot-notice {
+            background: #ecf0f1;
+            border-radius: 8px;
+            padding: 20px;
+            margin-top: 20px;
+            border-left: 4px solid #f39c12;
+        }
+
+        .reboot-notice h3 {
+            color: #e67e22;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="success-icon">✅</div>
+        <h1>Configuration Saved!</h1>
+        <div class="message">
+            <p>Your WiFi credentials have been successfully saved.</p>
+            <p>The device will now reboot and connect to your WiFi network.</p>
+        </div>
+
+        <div class="reboot-notice">
+            <h3>🔄 Device Rebooting</h3>
+            <p>Please wait while the device restarts with the new settings.</p>
+            <p>This may take up to 30 seconds.</p>
+        </div>
+    </div>
+
+    <script>
+        // Auto-refresh the page to show if device is back online
+        setTimeout(() => {
+            // Try to reload the page - if successful, device rebooted
+            fetch(window.location.href, { method: 'HEAD' })
+                .then(() => {
+                    window.location.reload();
+                })
+                .catch(() => {
+                    // Device is rebooting, show waiting message
+                    document.querySelector('.message').innerHTML =
+                        '<p><strong>Device is rebooting...</strong></p>' +
+                        '<p>Please wait for the device to restart.</p>';
+                });
+        }, 10000);
+    </script>
+</body>
+</html>

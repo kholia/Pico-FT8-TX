@@ -34,8 +34,8 @@
 
 /*
 These are functions for producing 32-bit hashes for hash table lookup.
-hashword(), hashlittle(), hashlittle2(), hashbig(), mix(), and final() 
-are externally useful functions.  Routines to test the hash are included 
+hashword(), hashlittle(), hashlittle2(), hashbig(), mix(), and final()
+are externally useful functions.  Routines to test the hash are included
 if SELF_TEST is defined.  You can use this free for any purpose.  It's in
 the public domain.  It has no warranty.
 
@@ -43,7 +43,7 @@ You probably want to use hashlittle().  hashlittle() and hashbig()
 hash byte arrays.  hashlittle() is is faster than hashbig() on
 little-endian machines.  Intel and AMD are little-endian machines.
 On second thought, you probably want hashlittle2(), which is identical to
-hashlittle() except it returns two 32-bit hashes for the price of one.  
+hashlittle() except it returns two 32-bit hashes for the price of one.
 You could implement hashbig2() if you wanted but I haven't bothered here.
 
 If you want to find a hash of, say, exactly 7 integers, do
@@ -56,9 +56,9 @@ If you want to find a hash of, say, exactly 7 integers, do
 then use c as the hash value.  If you have a variable length array of
 4-byte integers to hash, use hashword().  If you have a byte array (like
 a character string), use hashlittle().  If you have several byte arrays, or
-a mix of things, see the comments above hashlittle().  
+a mix of things, see the comments above hashlittle().
 
-Why is this so big?  I read 12 bytes at a time into 3 4-byte integers, 
+Why is this so big?  I read 12 bytes at a time into 3 4-byte integers,
 then mix those integers.  This is fast (you can do a lot more thorough
 mixing with 12*3 instructions on 3 integers than you can with 3 instructions
 on 1 byte), but shoehorning those bytes into integers efficiently is messy.
@@ -102,7 +102,7 @@ This was tested for:
   the output delta to a Gray code (a^(a>>1)) so a string of 1's (as
   is commonly produced by subtraction) look like a single 1-bit
   difference.
-* the base values were pseudorandom, all zero but one bit set, or 
+* the base values were pseudorandom, all zero but one bit set, or
   all zero plus a counter that starts at zero.
 
 Some k values for my "a-=c; a^=rot(c,k); c+=b;" arrangement that
@@ -112,7 +112,7 @@ satisfy this are
    14  9  3  7 17  3
 Well, "9 15 3 18 27 15" didn't quite get 32 bits diffing
 for "differ" defined as + with a one-bit base and a two-bit delta.  I
-used http://burtleburtle.net/bob/hash/avalanche.html to choose 
+used http://burtleburtle.net/bob/hash/avalanche.html to choose
 the operations, constants, and arrangements of the variables.
 
 This does not achieve avalanche.  There are input bits of (a,b,c)
@@ -151,7 +151,7 @@ produce values of c that look totally different.  This was tested for
   the output delta to a Gray code (a^(a>>1)) so a string of 1's (as
   is commonly produced by subtraction) look like a single 1-bit
   difference.
-* the base values were pseudorandom, all zero but one bit set, or 
+* the base values were pseudorandom, all zero but one bit set, or
   all zero plus a counter that starts at zero.
 
 These constants passed:
@@ -237,14 +237,14 @@ uint32_t nhash_( const void *key, int *length0, uint32_t *initval0)
     }
 
     /*----------------------------- handle the last (probably partial) block */
-    /* 
+    /*
      * "k[2]&0xffffff" actually reads beyond the end of the string, but
      * then masks off the part it's not allowed to read.  Because the
      * string is aligned, the masked-off tail is in the same word as the
      * rest of the string.  Every machine with memory protection I've seen
      * does it on word boundaries, so is OK with this.  But VALGRIND will
      * still catch it and complain.  The masking trick does make the hash
-     * noticably faster for short strings (like English words).
+     * noticeably faster for short strings (like English words).
      */
 #ifndef VALGRIND
 

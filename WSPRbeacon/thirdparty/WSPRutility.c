@@ -509,7 +509,7 @@ void pad_callsign(char * call)
 		call[0] = ' ';
 	}
 
-	// Now the 3rd charcter in the callsign must be a digit
+	// Now the 3rd character in the callsign must be a digit
 	// if(call[2] < '0' || call[2] > '9')
 	// {
 	// 	// return 1;

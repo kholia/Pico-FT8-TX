@@ -1,0 +1,9 @@
+<html>
+<head>
+    <title>Pico FT8 WiFi Setup</title>
+</head>
+<body>
+    <h1>Pico FT8 WiFi Setup</h1>
+    <p>Status: <!--#status--></p>
+</body>
+</html>
